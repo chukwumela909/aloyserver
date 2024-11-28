@@ -3,48 +3,49 @@ const router = express.Router();
 const Package = require("../models/package");
 
 // Route to create a package
-router.post("/create", async (req, res, next) => {
-  const {
-    trackingId,
-    packageName,
-    pickup,
-    destination,
-    currentLocation,
-    checkpoints,
-    packageDescription,
-    packageStatus,
-    dateOfDeparture,
-    dateOfArrival
-  } = req.body;
+router.post("/create", async (req, res) => {
+  try {
+    const {
+      trackingId,
+      senderName,
+      senderEmail,
+      senderPhone,
+      senderLocation,
+      receiverName,
+      receiverEmail,
+      receiverPhone,
+      receiverLocation,
+    } = req.body;
 
-  const package = await Package.findOne({ trackingId });
-
-    if (package) {
-      return res.status(400).json({ message: 'Package already exist' });
+    // Check if a package with the same trackingId already exists
+    const existingPackage = await Package.findOne({ trackingId });
+    if (existingPackage) {
+      return res.status(400).json({error: true, message: "Package with this tracking ID already exists." });
     }
 
-  // // Create a new package instance
-  const newPackage = new Package({
-    trackingId,
-    packageName,
-    pickup,
-    destination,
-    currentLocation,
-    checkpoints,
-    packageDescription,
-    packageStatus,
-    dateOfDeparture,
-    dateOfArrival
-  });
+    // Create a new package instance
+    const newPackage = new Package({
+      trackingId,
+      senderName,
+      senderEmail,
+      senderPhone,
+      senderLocation,
+      receiverName,
+      receiverEmail,
+      receiverPhone,
+      receiverLocation,
+      packageStatus: "in transit", // Default value as per schema
+    });
 
-  try {
     // Save the package to the database
     const savedPackage = await newPackage.save();
-    res.status(200).json(savedPackage);
+
+    // Respond with the saved package details
+    res.status(201).json(savedPackage);
   } catch (error) {
-    res.status(500).json({ message: error });
+    // Respond with error details
+    res.status(500).json({ message: error.message || "An error occurred while creating the package." });
   }
-  // res.json({message: req.body})
 });
 
 router.post("/update/:trackingId", async (req, res, next) => {
