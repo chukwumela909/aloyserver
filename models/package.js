@@ -40,9 +40,21 @@ const PackageSchema = new Schema({
     type: String,
     required: true
   },
-  packageStatus: {
+  deliveryMode: {
     type: String,
-    default: 'in transit'
+    required: true
+  },
+  contentName: {
+    type: String,
+    required: true
+  },
+  contentWeight: {
+    type: String,
+    required: true
+  },
+  deliveryStatus: {
+    type: String,
+    required: true
   },
 }, {
   timestamps: true // automatically add createdAt and updatedAt fields

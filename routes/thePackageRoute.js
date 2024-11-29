@@ -15,6 +15,10 @@ router.post("/create", async (req, res) => {
       receiverEmail,
       receiverPhone,
       receiverLocation,
+      deliveryMode,
+      contentName,
+      contentWeight,
+      deliveryStatus
     } = req.body;
 
     // Check if a package with the same trackingId already exists
@@ -34,7 +38,10 @@ router.post("/create", async (req, res) => {
       receiverEmail,
       receiverPhone,
       receiverLocation,
-      packageStatus: "in transit", // Default value as per schema
+      deliveryMode,
+      contentName,
+      contentWeight,
+      deliveryStatus
     });
 
     // Save the package to the database
@@ -51,15 +58,7 @@ router.post("/create", async (req, res) => {
 router.post("/update/:trackingId", async (req, res, next) => {
   const { trackingId } = req.params;
   const {
-    packageName,
-    pickup,
-    destination,
-    currentLocation,
-    checkpoints,
-    packageDescription,
-    packageStatus,
-    dateOfDeparture,
-    dateOfArrival
+   deliveryStatus
   } = req.body;
 
 
