@@ -56,6 +56,28 @@ const PackageSchema = new Schema({
     type: String,
     required: true
   },
+  timeline: [{
+    status: {
+      type: String,
+      required: true
+    },
+    description: {
+      type: String,
+      default: ''
+    },
+    location: {
+      type: String,
+      default: ''
+    },
+    timestamp: {
+      type: Date,
+      default: Date.now
+    },
+    updatedBy: {
+      type: String,
+      default: 'System'
+    }
+  }]
 }, {
   timestamps: true // automatically add createdAt and updatedAt fields
 });

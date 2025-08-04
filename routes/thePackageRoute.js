@@ -47,6 +47,17 @@ router.post("/create", async (req, res) => {
     // Save the package to the database
     const savedPackage = await newPackage.save();
 
+    // Add initial timeline entry
+    savedPackage.timeline.push({
+      status: deliveryStatus,
+      description: 'Package registered in system',
+      location: senderLocation,
+      timestamp: new Date(),
+      updatedBy: 'System'
+    });
+
+    await savedPackage.save();
+
     // Respond with the saved package details
     res.status(201).json(savedPackage);
   } catch (error) {
@@ -98,6 +109,73 @@ router.post("/update/:trackingId", async (req, res, next) => {
       });
     }
     
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Add timeline entry to a package
+router.post("/timeline/:trackingId", async (req, res) => {
+  const { trackingId } = req.params;
+  const { status, description, location, updatedBy } = req.body;
+
+  try {
+    // Validate required fields
+    if (!status) {
+      return res.status(400).json({ message: 'Status is required' });
+    }
+
+    // Find the package
+    const package = await Package.findOne({ trackingId });
+    if (!package) {
+      return res.status(404).json({ message: 'Package not found' });
+    }
+
+    // Add timeline entry
+    const timelineEntry = {
+      status,
+      description: description || '',
+      location: location || '',
+      timestamp: new Date(),
+      updatedBy: updatedBy || 'Admin'
+    };
+
+    package.timeline.push(timelineEntry);
+    
+    // Update the main delivery status if provided
+    if (status !== package.deliveryStatus) {
+      package.deliveryStatus = status;
+    }
+
+    await package.save();
+
+    res.json({
+      message: 'Timeline updated successfully',
+      timeline: package.timeline,
+      package: package
+    });
+  } catch (error) {
+    console.error('Error updating timeline:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Get timeline for a package
+router.get("/timeline/:trackingId", async (req, res) => {
+  const { trackingId } = req.params;
+
+  try {
+    const package = await Package.findOne({ trackingId }).select('timeline trackingId');
+    
+    if (!package) {
+      return res.status(404).json({ message: 'Package not found' });
+    }
+
+    res.json({
+      trackingId: package.trackingId,
+      timeline: package.timeline.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+    });
+  } catch (error) {
+    console.error('Error fetching timeline:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
