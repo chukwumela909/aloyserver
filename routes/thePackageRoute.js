@@ -57,23 +57,68 @@ router.post("/create", async (req, res) => {
 
 router.post("/update/:trackingId", async (req, res, next) => {
   const { trackingId } = req.params;
-  const {
-   deliveryStatus
-  } = req.body;
-
-
   const updateData = req.body;
 
   try {
-    const package = await Package.findOneAndUpdate({ trackingId }, updateData, { new: true });
+    // Validate that trackingId exists
+    if (!trackingId) {
+      return res.status(400).json({ message: 'Tracking ID is required' });
+    }
+
+    // Remove any fields that shouldn't be updated
+    delete updateData._id;
+    delete updateData.trackingId;
+    delete updateData.createdAt;
+    delete updateData.updatedAt;
+
+    // Find and update the package
+    const package = await Package.findOneAndUpdate(
+      { trackingId }, 
+      updateData, 
+      { new: true, runValidators: true }
+    );
 
     if (!package) {
       return res.status(400).json({ message: 'Package not found' });
     }
 
-    res.json(package);
+    res.json({
+      message: 'Package updated successfully',
+      package: package
+    });
   } catch (error) {
     console.error('Error updating package:', error);
+    
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ 
+        message: 'Validation failed', 
+        errors: errors 
+      });
+    }
+    
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Add DELETE endpoint for package deletion
+router.delete("/delete/:trackingId", async (req, res, next) => {
+  const { trackingId } = req.params;
+
+  try {
+    const package = await Package.findOneAndDelete({ trackingId });
+
+    if (!package) {
+      return res.status(400).json({ message: 'Package not found' });
+    }
+
+    res.json({ 
+      message: 'Package deleted successfully',
+      deletedPackage: package
+    });
+  } catch (error) {
+    console.error('Error deleting package:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
